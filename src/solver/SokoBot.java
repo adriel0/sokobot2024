@@ -1,13 +1,35 @@
 package solver;
 import java.util.*;
+
+class State {
+  public int[] playerLocation = new int[2];
+  public List<int[]> boxLocations = new ArrayList<>();
+  public String actions = "";
+  public int cost = 0;
+  public int heuristic;
+}
+
+class StateComparator implements Comparator<State>{
+             
+  public int compare(State s1, State s2) {
+      if (s1.cost+s1.heuristic > s2.cost+s2.heuristic)
+          return 1;
+      else if (s1.cost+s1.heuristic < s2.cost+s2.heuristic)
+          return -1;
+      return 0;
+      }
+}
+
+
 public class SokoBot {
   public List<int[]> walls = new ArrayList<>();
   public List<int[]> boxes = new ArrayList<>();
   public List<int[]> goals = new ArrayList<>();
   public int[] player;
-  public List<int[]> frontier = new ArrayList<>();
-  public List<int[]> explored = new ArrayList<>();
+  PriorityQueue<State> frontier = new PriorityQueue<>(new StateComparator());
+  public List<State> explored = new ArrayList<>();
   public char[] actions = {'l', 'r', 'u', 'd'};
+  public State startState;
 
   
   public int[] performAction(int[] location, char action){
@@ -30,9 +52,9 @@ public class SokoBot {
   }
 
 
-  public boolean isEndState(){
-    for (int i = 0; i < boxes.size(); i++){
-      if (!goals.contains(boxes.get(i))){
+  public boolean isEndState(List<int[]> boxLocations){
+    for (int i = 0; i < boxLocations.size(); i++){
+      if (!goals.contains(boxLocations.get(i))){
         return false;
       }
     }
@@ -40,12 +62,16 @@ public class SokoBot {
     return true;
   }
 
-public int heuristicFunction(int[] playerLocation, List<int[]> boxLocations){
+
+
+public int heuristicFunction(List<int[]> boxLocations){
   int estimatedDistance = 0;
   List<int[]> unfinishedBoxes = new ArrayList<>();
   List<int[]> unfinishedGoals = new ArrayList<>();
 
-  Collections.copy(unfinishedGoals, goals);
+  for (int[] goalLocations: goals) {
+    unfinishedGoals.add(goalLocations.clone());
+  }
 
   //for each box
   for (int i = 0; i < boxLocations.size(); i++){
@@ -60,6 +86,8 @@ public int heuristicFunction(int[] playerLocation, List<int[]> boxLocations){
     }
 
   }
+  //================================================================
+  // maybe optimize this by sorting the boxes to their closest goals
 
   for (int j = 0; j < unfinishedBoxes.size(); j++){
     estimatedDistance += Math.abs(unfinishedBoxes.get(j)[0] - unfinishedGoals.get(j)[0]) +
@@ -68,6 +96,16 @@ public int heuristicFunction(int[] playerLocation, List<int[]> boxLocations){
 
   return estimatedDistance;
 }
+
+  public boolean isExplored(State state){
+    for (State exploredState : explored) {
+      //if the state's player location AND box locations are exactly the same with one of the states in the explored list, then return true
+      if (exploredState.playerLocation.equals(state.playerLocation) && exploredState.boxLocations.equals(state.boxLocations)){
+        return true;
+      }
+    }
+    return false;
+  }
 
   
   public String solveSokobanPuzzle(int width, int height, char[][] mapData, char[][] itemsData) {
@@ -80,11 +118,6 @@ public int heuristicFunction(int[] playerLocation, List<int[]> boxLocations){
      * that just moves left and right repeatedly.
      */
     
-    try {
-      Thread.sleep(3000);
-    } catch (Exception ex) {
-      ex.printStackTrace();
-    }
 
     // notes the location of each object in the map and saves them into their respective lists
     for (int i = 0; i < height; i++) {
@@ -102,22 +135,71 @@ public int heuristicFunction(int[] playerLocation, List<int[]> boxLocations){
       }
     }
 
-    // actual algorithm
-    Collections.copy(frontier, boxes); //copy box locations into frontier
+    //start state will save the initial location of the player and the boxes
+    startState.playerLocation = player.clone(); 
+    for (int[] locations: boxes) {
+      startState.boxLocations.add(locations.clone());
+    }
+    
+    frontier.add(startState);
+
+    
+    
     while (!frontier.isEmpty()){
-      int[] node = frontier.remove(0);
 
+      //extract one state
+      State node = frontier.poll();
 
+      //if all goals have boxes, game done
+      if (isEndState(node.boxLocations)){
+        return node.actions;
+      }
+
+      //attempt to perform all actions and see which ones are valid or invalid
       for (int i = 0; i < 4; i++){
-        char action = actions[i];
+        State nextNode = new State();
+        char actionAttempted = actions[i];
 
+        int[] nextPlayerLocation = performAction(node.playerLocation, actionAttempted);
 
+        //if the player moved into a box location, it means they attempted to push it
+        if (node.boxLocations.contains(nextPlayerLocation)){
+            //check if the box can be pushed in the direction
+            int[] nextBoxLocation = performAction(nextPlayerLocation, actionAttempted);
+            //if box was not moved into a wall or another box, valid move
+            if (!node.boxLocations.contains(nextBoxLocation) && !walls.contains(nextBoxLocation)){
 
-        int [] nextNode = performAction(node, action);
-        if (walls.contains(nextNode) || boxes.contains(nextNode))){
-          //invalid move so prune
-        } else {
-          //valid move
+              for (int[] box: node.boxLocations) {
+                nextNode.boxLocations.add(box.clone());
+              }
+              nextNode.boxLocations.set(nextNode.boxLocations.indexOf(nextPlayerLocation), nextBoxLocation);
+              nextNode.playerLocation = nextPlayerLocation.clone();
+              nextNode.actions = node.actions;
+              nextNode.actions += actionAttempted;
+              nextNode.cost = node.cost; //if player did move a box, we don't add a cost (TO INCENTIVIZE THE MOVES THAT MOVE A BOX)
+              nextNode.heuristic = heuristicFunction(nextNode.boxLocations);
+              //if not explored yet, we add the next state to frontier and explored list
+              if (!isExplored(nextNode)){
+                frontier.add(nextNode);
+                explored.add(nextNode);
+              }
+
+            }
+
+        //this part means that the player did not move into a location of a box or a wall, so he just moved into an empty space
+        } else if (!walls.contains(nextPlayerLocation)) {
+          for (int[] box: node.boxLocations) {
+            nextNode.boxLocations.add(box.clone());
+          }
+          nextNode.playerLocation = nextPlayerLocation.clone();
+          nextNode.actions = node.actions;
+          nextNode.actions += actionAttempted;
+          nextNode.cost = node.cost + 1; //if player did not move a box, add 1 to cost
+          nextNode.heuristic = heuristicFunction(nextNode.boxLocations);
+          if (!isExplored(nextNode)){
+            frontier.add(nextNode);
+            explored.add(nextNode);
+          }
         }
 
 
