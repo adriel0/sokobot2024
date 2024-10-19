@@ -97,7 +97,7 @@ public class SokoBot {
 
 
 
-public int heuristicFunction(List<int[]> boxLocations){
+public int heuristicFunction(List<int[]> boxLocations, int[] playerLocation){
   int estimatedDistance = 0;
   List<int[]> unfinishedBoxes = new ArrayList<>();
   List<int[]> unfinishedGoals = new ArrayList<>();
@@ -127,7 +127,18 @@ public int heuristicFunction(List<int[]> boxLocations){
                          Math.abs(unfinishedBoxes.get(j)[1] - unfinishedGoals.get(j)[1]);
   }
 
-  return estimatedDistance;
+  //find for minimum distance between a box and the player
+  int temp = Integer.MAX_VALUE;
+  for (int j = 0; j < unfinishedBoxes.size(); j++){
+    int difference = Math.abs(unfinishedBoxes.get(j)[0] - playerLocation[0]) +
+                     Math.abs(unfinishedBoxes.get(j)[1] - playerLocation[1]);
+
+    if(temp > difference){
+      temp = difference;
+    }
+  }
+
+  return estimatedDistance+temp;
 }
 
   public boolean isExplored(State state){
@@ -284,7 +295,7 @@ public int heuristicFunction(List<int[]> boxLocations){
               nextNode.actions = node.actions;
               nextNode.actions += actionAttempted;
               nextNode.cost = node.cost; //if player did move a box, we don't add a cost (TO INCENTIVIZE THE MOVES THAT MOVE A BOX)
-              nextNode.heuristic = heuristicFunction(nextNode.boxLocations);
+              nextNode.heuristic = heuristicFunction(nextNode.boxLocations, nextNode.playerLocation);
               //if not explored yet, we add the next state to frontier and explored list
               //System.out.println("checking: "+actionAttempted);
               if (!isExplored(nextNode) && !canPrune(nextNode.boxLocations)){
@@ -303,7 +314,7 @@ public int heuristicFunction(List<int[]> boxLocations){
           nextNode.actions = node.actions;
           nextNode.actions += actionAttempted;
           nextNode.cost = node.cost + 1; //if player did not move a box, add 1 to cost
-          nextNode.heuristic = heuristicFunction(nextNode.boxLocations);
+          nextNode.heuristic = heuristicFunction(nextNode.boxLocations, nextNode.playerLocation);
           //System.out.println("checking: "+actionAttempted);
           if (!isExplored(nextNode) && !canPrune(nextNode.boxLocations)){
             frontier.add(nextNode);
