@@ -69,7 +69,7 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener {
   private long solutionStartTime;
   private long solutionEndTime;
 
-  private final int SOLUTION_TIME_LIMIT = 15000;
+  private final int SOLUTION_TIME_LIMIT = 1500000;
 
   public GamePanel() {
     this.setBackground(Color.BLACK);
@@ -352,7 +352,7 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener {
   }
 
   public void playSolution(String solutionString) {
-    playSolution(solutionString, 100);
+    playSolution(solutionString, 10);
   }
 
   public void playSolution(String solutionString, int delay) {
