@@ -29,6 +29,46 @@ public class SokoBot {
     return location;
   }
 
+
+  public boolean isEndState(){
+    for (int i = 0; i < boxes.size(); i++){
+      if (!goals.contains(boxes.get(i))){
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+public int heuristicFunction(int[] playerLocation, List<int[]> boxLocations){
+  int estimatedDistance = 0;
+  List<int[]> unfinishedBoxes = new ArrayList<>();
+  List<int[]> unfinishedGoals = new ArrayList<>();
+
+  Collections.copy(unfinishedGoals, goals);
+
+  //for each box
+  for (int i = 0; i < boxLocations.size(); i++){
+
+    //if a goal position already has a box, remove it from unfinishedGoals
+    if (goals.contains(boxLocations.get(i))){
+      unfinishedGoals.remove(unfinishedGoals.indexOf(boxLocations.get(i)));
+
+    //else add the box into unfinishedBoxes
+    } else {
+      unfinishedBoxes.add(boxLocations.get(i));
+    }
+
+  }
+
+  for (int j = 0; j < unfinishedBoxes.size(); j++){
+    estimatedDistance += Math.abs(unfinishedBoxes.get(j)[0] - unfinishedGoals.get(j)[0]) +
+                         Math.abs(unfinishedBoxes.get(j)[1] - unfinishedGoals.get(j)[1]);
+  }
+
+  return estimatedDistance;
+}
+
   
   public String solveSokobanPuzzle(int width, int height, char[][] mapData, char[][] itemsData) {
     /*
@@ -63,13 +103,18 @@ public class SokoBot {
     }
 
     // actual algorithm
-    Collections.copy(boxes, frontier); //copy box locations into frontier
+    Collections.copy(frontier, boxes); //copy box locations into frontier
     while (!frontier.isEmpty()){
       int[] node = frontier.remove(0);
+
+
       for (int i = 0; i < 4; i++){
         char action = actions[i];
+
+
+
         int [] nextNode = performAction(node, action);
-        if (walls.contains(nextNode || boxes.contains(nextNode))){
+        if (walls.contains(nextNode) || boxes.contains(nextNode))){
           //invalid move so prune
         } else {
           //valid move
