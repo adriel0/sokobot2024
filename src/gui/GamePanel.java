@@ -388,7 +388,7 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener {
           executeMove(3);
           break;
       }
-    } else if (e.getSource() == checkForSolutionTimer) {
+    } else if (true) {
       if (!solutionThread.isAlive()) {
         // Solution was found
         solutionTimer.stop();

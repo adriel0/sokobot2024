@@ -4,9 +4,18 @@ import java.util.*;
 class State {
   public int[] playerLocation = new int[2];
   public List<int[]> boxLocations = new ArrayList<>();
+  public char[][] boxmap; 
   public String actions = "";
   public int cost = 0;
   public int heuristic;
+  public String generatekey(){
+    String temp = "";
+    for (int[] b : boxLocations) {
+      temp += Integer.toString(b[0]) + Integer.toString(b[1]);
+    }
+    temp += Integer.toString(playerLocation[0]) + Integer.toString(playerLocation[1]);
+    return temp;
+  }
 }
 
 class StateComparator implements Comparator<State>{
@@ -28,11 +37,16 @@ public class SokoBot {
   public int[] player;
   PriorityQueue<State> frontier = new PriorityQueue<>(new StateComparator());
   public List<State> explored = new ArrayList<>();
+  public Set<String> e = new HashSet<>();
   public char[] actions = {'l', 'r', 'u', 'd'};
   public State startState = new State();
   public char[][] mapData;
   public char[][] itemsData;
-
+  
+  public long endexecutionTime = 0;
+  public long pruneexecutionTime = 0;
+  public long dupeexecutionTime = 0;
+  
   public void set(List<int[]> source, int[] elementToReplace, int[] newValue){
     for (int[] e : source) {
       if(e[0] == elementToReplace[0] && e[1] == elementToReplace[1]){
@@ -57,12 +71,7 @@ public class SokoBot {
     return false;
   }
   public boolean contains(List<int[]> source, int[] elementToCheck){
-    for (int[] e : source) {
-      if(e[0] == elementToCheck[0] && e[1] == elementToCheck[1])
-        return true;
-    }
-
-    return false;
+    return source.stream().anyMatch(e -> Arrays.equals(e, elementToCheck));
   }
   public boolean containsall(List<int[]> source, List<int[]> elementsToCheck){
     for (int[] ec : elementsToCheck) {
@@ -86,9 +95,8 @@ public class SokoBot {
 
 
   public boolean isEndState(List<int[]> boxLocations){
-
     for (int[] bl : boxLocations) {
-      if (!contains(goals,bl)){
+      if (mapData[bl[0]][bl[1]] != '.'){
         return false;
       }
     }
@@ -99,46 +107,63 @@ public class SokoBot {
 
 public int heuristicFunction(List<int[]> boxLocations, int[] playerLocation){
   int estimatedDistance = 0;
-  List<int[]> unfinishedBoxes = new ArrayList<>();
-  List<int[]> unfinishedGoals = new ArrayList<>();
+  //List<int[]> unfinishedBoxes = new ArrayList<>();
+  //List<int[]> unfinishedGoals = new ArrayList<>(goals);
 
-  for (int[] goalLocations: goals) {
-    unfinishedGoals.add(goalLocations.clone());
-  }
+  // for (int[] goalLocations: goals) {
+  //   unfinishedGoals.add(goalLocations.clone());
+  // }
 
   //for each box
-  for (int i = 0; i < boxLocations.size(); i++){
-
-    //if a goal position already has a box, remove it from unfinishedGoals
-    if (contains(goals,boxLocations.get(i))){
-      remove(unfinishedGoals,boxLocations.get(i));
-
-    //else add the box into unfinishedBoxes
-    } else {
-      unfinishedBoxes.add(boxLocations.get(i));
-    }
-
-  }
+//   for (int[] box : boxLocations) {
+//     if (contains(goals, box)) {
+//         unfinishedGoals.removeIf(goal -> Arrays.equals(goal, box));
+//     } else {
+//         unfinishedBoxes.add(box);
+//     }
+// }
   //================================================================
   // maybe optimize this by sorting the boxes to their closest goals
 
-  for (int j = 0; j < unfinishedBoxes.size(); j++){
-    estimatedDistance += Math.abs(unfinishedBoxes.get(j)[0] - unfinishedGoals.get(j)[0]) +
-                         Math.abs(unfinishedBoxes.get(j)[1] - unfinishedGoals.get(j)[1]);
-  }
-
-  //find for minimum distance between a box and the player
-  int temp = Integer.MAX_VALUE;
-  for (int j = 0; j < unfinishedBoxes.size(); j++){
-    int difference = Math.abs(unfinishedBoxes.get(j)[0] - playerLocation[0]) +
-                     Math.abs(unfinishedBoxes.get(j)[1] - playerLocation[1]);
-
-    if(temp > difference){
-      temp = difference;
+  for (int[] b : boxLocations) {
+    int temp = Integer.MAX_VALUE;
+    if(mapData[b[0]][b[1]] != '.'){
+      for (int[] g : goals) {
+        int dist = Math.abs(b[0] - g[0]) +
+                  Math.abs(b[1] - g[1]);
+        temp = Math.min(temp, dist);
+      }
+      estimatedDistance += temp;
+      estimatedDistance += ((Math.abs(b[0] - playerLocation[0]) +
+      Math.abs(b[1] - playerLocation[1]))-1)*((Math.abs(b[0] - playerLocation[0]) +
+                     Math.abs(b[1] - playerLocation[1]))-1);
     }
   }
+  int temp = Integer.MAX_VALUE;
+  for (int[] g : goals) {
+    int dist = Math.abs(playerLocation[0] - g[0]) +
+                Math.abs(playerLocation[1] - g[1]);
+    temp = Math.min(temp, dist);
+  }
+  estimatedDistance += temp*temp;
+  
 
-  return estimatedDistance+temp;
+  // for (int j = 0; j < unfinishedBoxes.size(); j++){
+  //   estimatedDistance += Math.abs(unfinishedBoxes.get(j)[0] - unfinishedGoals.get(j)[0]) +
+  //                        Math.abs(unfinishedBoxes.get(j)[1] - unfinishedGoals.get(j)[1]);
+  // }
+
+  //find for minimum distance between a box and the player
+  //int temp = Integer.MAX_VALUE;
+  // for (int j = 0; j < unfinishedBoxes.size(); j++){
+  //   estimatedDistance += 5*((Math.abs(unfinishedBoxes.get(j)[0] - playerLocation[0]) +
+  //                    Math.abs(unfinishedBoxes.get(j)[1] - playerLocation[1]))-1);
+    // if(temp > difference){
+    //   temp = difference;
+    // }
+  //}
+
+  return estimatedDistance;
 }
 
   public boolean isExplored(State state){
@@ -160,13 +185,14 @@ public int heuristicFunction(List<int[]> boxLocations, int[] playerLocation){
     return false;
   }
 
-  public char[][] getGrid(int[] box,List<int[]> boxes){
+  public char[][] getGrid(int[] box,char[][] boxmap){
     int x = box[0];
     int y = box[1];
+    
     return new char[][]{
-      new char[]{contains(walls, new int[]{x-1,y-1}) ? 'w':(contains(boxes, new int[]{x-1,y-1}) ? 'b':' '), contains(walls, new int[]{x-1,y}) ? 'w':(contains(boxes, new int[]{x-1,y}) ? 'b':' '),contains(walls, new int[]{x-1,y+1}) ? 'w':(contains(boxes, new int[]{x-1,y+1}) ? 'b':' ')},
-      new char[]{contains(walls, new int[]{x,y-1}) ? 'w':(contains(boxes, new int[]{x,y-1}) ? 'b':' '), 'b', contains(walls, new int[]{x,y+1}) ? 'w':(contains(boxes, new int[]{x,y+1}) ? 'b':' ')},
-      new char[]{contains(walls, new int[]{x+1,y-1}) ? 'w':(contains(boxes, new int[]{x+1,y-1}) ? 'b':' '), contains(walls, new int[]{x+1,y}) ? 'w':(contains(boxes, new int[]{x+1,y}) ? 'b':' '),contains(walls, new int[]{x+1,y+1}) ? 'w':(contains(boxes, new int[]{x+1,y+1}) ? 'b':' ')}};
+      new char[]{(mapData[x-1][y-1] == '#') ? 'w':boxmap[x-1][y-1], (mapData[x-1][y] == '#') ? 'w':boxmap[x-1][y], (mapData[x-1][y+1] == '#') ? 'w':boxmap[x-1][y+1]},
+      new char[]{(mapData[x][y-1] == '#') ? 'w':boxmap[x][y-1], 'b', (mapData[x][y+1] == '#') ? 'w':boxmap[x][y+1]},
+      new char[]{(mapData[x+1][y-1] == '#') ? 'w':boxmap[x][y-1], (mapData[x+1][y] == '#') ? 'w':boxmap[x+1][y], (mapData[x+1][y+1] == '#') ? 'w':boxmap[x+1][y+1]}};
   }
   public char[][] rotate(char[][] grid) {
       char[][] temp = new char[3][3];
@@ -189,38 +215,51 @@ public int heuristicFunction(List<int[]> boxLocations, int[] playerLocation){
 
 
 
-  public boolean canPrune(List<int[]> boxes){
-    List<int[]> unfinishedBoxes = new ArrayList<>();
-    for (int[] b : boxes) {
-      if(!contains(goals, b))
-        unfinishedBoxes.add(b);
-    }
-    char[][] temp;
-    for (int[] b : unfinishedBoxes) {
-      temp = getGrid(b, boxes);
-      for (int index = 0; index < 4; index++) {
-        if ((temp[0][1] == 'w' && temp[1][2] == 'w') ||
-        (temp[0][1] == 'b' && temp[0][2] == 'w' && temp[1][2] == 'w') ||
-        (temp[0][1] == 'b' && temp[0][2] == 'w' && temp[1][2] == 'b') ||
-        (temp[0][1] == 'b' && temp[0][2] == 'b' && temp[1][2] == 'b') ||
-        (temp[0][1] == 'b' && temp[0][2] == 'w' && temp[1][0] == 'w'))
-          return true;
-        char[][] temp2 = new char[3][3];
-        temp2[0] = temp[0].clone();
-        temp2[1] = temp[1].clone();
-        temp2[2] = temp[2].clone();
-        temp2 = flip(temp2);
-        if ((temp2[0][1] == 'w' && temp2[1][2] == 'w') ||
-        (temp2[0][1] == 'b' && temp2[0][2] == 'w' && temp2[1][2] == 'w') ||
-        (temp2[0][1] == 'b' && temp2[0][2] == 'w' && temp2[1][2] == 'b') ||
-        (temp2[0][1] == 'b' && temp2[0][2] == 'b' && temp2[1][2] == 'b') ||
-        (temp2[0][1] == 'b' && temp2[0][2] == 'w' && temp2[1][0] == 'w'))
-          return true;
-        temp = rotate(temp);
-      }
-    }
-    return false;
+  public boolean canPrune(List<int[]> boxes, char[][] boxmap){
+    // List<int[]> unfinishedBoxes = new ArrayList<>();
+    // for (int[] b : boxes) {
+    //   if(mapData[b[0]][b[1]] != '.')
+    //     unfinishedBoxes.add(b);
+    // }
+    //char[][] temp;
+    return boxes.stream().filter(b ->mapData[b[0]][b[1]] != '.' )
+    .anyMatch(b -> (mapData[b[0]-1][b[1]] == '#' && mapData[b[0]][b[1]-1] == '#') ||
+    (mapData[b[0]-1][b[1]] == '#' && mapData[b[0]][b[1]+1] == '#') ||
+    (mapData[b[0]+1][b[1]] == '#' && mapData[b[0]][b[1]-1] == '#') ||
+    (mapData[b[0]+1][b[1]] == '#' && mapData[b[0]][b[1]+1] == '#'));
   }
+  //   for (int[] b : boxes) {
+  //     if(mapData[b[0]][b[1]] != '.'){
+  //       //temp = getGrid(b, boxmap);
+  //       if ((mapData[b[0]-1][b[1]] == '#' && mapData[b[0]][b[1]-1] == '#') ||
+  //       (mapData[b[0]-1][b[1]] == '#' && mapData[b[0]][b[1]+1] == '#') ||
+  //       (mapData[b[0]+1][b[1]] == '#' && mapData[b[0]][b[1]-1] == '#') ||
+  //       (mapData[b[0]+1][b[1]] == '#' && mapData[b[0]][b[1]+1] == '#'))
+  //       return true;
+  //     }
+
+
+  //     // for (int index = 0; index < 4; index++) {
+  //     //   if ((temp[0][1] == 'b' && temp[0][2] == 'w' && temp[1][2] == 'w') ||
+  //     //   (temp[0][1] == 'b' && temp[0][2] == 'w' && temp[1][2] == 'b') ||
+  //     //   (temp[0][1] == 'b' && temp[0][2] == 'b' && temp[1][2] == 'b') ||
+  //     //   (temp[0][1] == 'b' && temp[0][2] == 'w' && temp[1][0] == 'w'))
+  //     //     return true;
+  //     //   char[][] temp2 = new char[3][3];
+  //     //   temp2[0] = temp[0].clone();
+  //     //   temp2[1] = temp[1].clone();
+  //     //   temp2[2] = temp[2].clone();
+  //     //   temp2 = flip(temp2);
+  //     //   if ((temp2[0][1] == 'b' && temp2[0][2] == 'w' && temp2[1][2] == 'w') ||
+  //     //   (temp2[0][1] == 'b' && temp2[0][2] == 'w' && temp2[1][2] == 'b') ||
+  //     //   (temp2[0][1] == 'b' && temp2[0][2] == 'b' && temp2[1][2] == 'b') ||
+  //     //   (temp2[0][1] == 'b' && temp2[0][2] == 'w' && temp2[1][0] == 'w'))
+  //     //     return true;
+  //     //   temp = rotate(temp);
+  //     // }
+  //   }
+  //   return false;
+  // }
 
   
   public String solveSokobanPuzzle(int width, int height, char[][] mapData, char[][] itemsData) {
@@ -251,12 +290,16 @@ public int heuristicFunction(List<int[]> boxLocations, int[] playerLocation){
           }
       }
     }
-    explored = new ArrayList<>();
     //start state will save the initial location of the player and the boxes
     startState.playerLocation = player.clone(); 
-    for (int[] locations: boxes) {
-      startState.boxLocations.add(locations.clone());
+    startState.boxLocations = new ArrayList<>(boxes);
+    startState.boxmap = new char[mapData.length][mapData[0].length];
+    for (int[] b : boxes) {
+      startState.boxmap[b[0]][b[1]] = 'b';
     }
+    // for (int[] locations: boxes) {
+    //   startState.boxLocations.add(locations.clone());
+    // }
     
     frontier.add(startState);
 
@@ -268,58 +311,101 @@ public int heuristicFunction(List<int[]> boxLocations, int[] playerLocation){
 
       //System.out.println(node.actions);
       //if all goals have boxes, game done
+      long startTime = System.nanoTime();
       if (isEndState(node.boxLocations)){
+
+        System.out.println("end "+ (double)endexecutionTime/1000000000.0 + "s");
+        System.out.println("prune "+ (double)pruneexecutionTime/1000000000.0 + "s");
+        System.out.println("dupe "+ (double)dupeexecutionTime/1000000000.0 + "s");
+                               
         System.out.println(node.actions);
         return node.actions;
       }
+      long endTime = System.nanoTime();
+      endexecutionTime += (endTime - startTime);;
 
       //attempt to perform all actions and see which ones are valid or invalid
-      for (int i = 0; i < 4; i++){
+      // char[][] boxmap = new char[mapData.length][mapData[0].length];
+      // for (int[] b : node.boxLocations) {
+      //   boxmap[b[0]][b[1]] = 'b';
+      // }
+      for (char actionAttempted:actions){
         State nextNode = new State();
-        char actionAttempted = actions[i];
 
         int[] nextPlayerLocation = performAction(node.playerLocation, actionAttempted);
 
         //if the player moved into a box location, it means they attempted to push it
-        if (contains(node.boxLocations,nextPlayerLocation)){
+        if (node.boxmap[nextPlayerLocation[0]][nextPlayerLocation[1]] == 'b'){
             //check if the box can be pushed in the direction
             int[] nextBoxLocation = performAction(nextPlayerLocation, actionAttempted);
             //if box was not moved into a wall or another box, valid move
-            if (!contains(node.boxLocations,nextBoxLocation) && !contains(walls,nextBoxLocation)){
-
-              for (int[] box: node.boxLocations) {
-                nextNode.boxLocations.add(box.clone());
-              }
+            if (node.boxmap[nextBoxLocation[0]][nextBoxLocation[1]] != 'b' && (mapData[nextBoxLocation[0]][nextBoxLocation[1]] != '#')){
+            //if (!contains(node.boxLocations,nextBoxLocation) && !contains(walls,nextBoxLocation)){
+            
+              startTime = System.nanoTime();
+              nextNode.boxLocations = new ArrayList<>(node.boxLocations);
+              // for (int[] box: node.boxLocations) {
+              //   nextNode.boxLocations.add(box.clone());
+              // }
               set(nextNode.boxLocations, nextPlayerLocation, nextBoxLocation);
+              nextNode.boxmap = new char[mapData.length][mapData[0].length];
+              for (int i = 0; i < nextNode.boxmap.length; i++) {
+                nextNode.boxmap[i] = node.boxmap[i].clone();
+              }
+              nextNode.boxmap[nextPlayerLocation[0]][nextPlayerLocation[1]] = ' ';
+              nextNode.boxmap[nextBoxLocation[0]][nextBoxLocation[1]] = 'b';
               nextNode.playerLocation = nextPlayerLocation.clone();
               nextNode.actions = node.actions;
               nextNode.actions += actionAttempted;
               nextNode.cost = node.cost; //if player did move a box, we don't add a cost (TO INCENTIVIZE THE MOVES THAT MOVE A BOX)
               nextNode.heuristic = heuristicFunction(nextNode.boxLocations, nextNode.playerLocation);
+              endTime = System.nanoTime();
+              dupeexecutionTime += (endTime - startTime);
               //if not explored yet, we add the next state to frontier and explored list
               //System.out.println("checking: "+actionAttempted);
-              if (!isExplored(nextNode) && !canPrune(nextNode.boxLocations)){
+              // if (!isExplored(nextNode) && !canPrune(nextNode.boxLocations)){
+              //   frontier.add(nextNode);
+              //   explored.add(nextNode);
+              // }
+              startTime = System.nanoTime();
+              if (!e.contains(nextNode.generatekey()) && !canPrune(nextNode.boxLocations, nextNode.boxmap)){
                 frontier.add(nextNode);
-                explored.add(nextNode);
+                e.add(nextNode.generatekey());
               }
-
+              endTime = System.nanoTime();
+              pruneexecutionTime += (endTime - startTime);
             }
 
         //this part means that the player did not move into a location of a box or a wall, so he just moved into an empty space
-        } else if (!contains(walls,nextPlayerLocation)) {
-          for (int[] box: node.boxLocations) {
-            nextNode.boxLocations.add(box.clone());
+        } else if ((mapData[nextPlayerLocation[0]][nextPlayerLocation[1]] != '#')) {
+          startTime = System.nanoTime();
+          nextNode.boxLocations = new ArrayList<>(node.boxLocations);
+          // for (int[] box: node.boxLocations) {
+          //   nextNode.boxLocations.add(box.clone());
+          // }
+          nextNode.boxmap = new char[mapData.length][mapData[0].length];
+          for (int i = 0; i < nextNode.boxmap.length; i++) {
+            nextNode.boxmap[i] = node.boxmap[i].clone();
           }
           nextNode.playerLocation = nextPlayerLocation.clone();
           nextNode.actions = node.actions;
           nextNode.actions += actionAttempted;
           nextNode.cost = node.cost + 1; //if player did not move a box, add 1 to cost
           nextNode.heuristic = heuristicFunction(nextNode.boxLocations, nextNode.playerLocation);
+          endTime = System.nanoTime();
+          dupeexecutionTime += (endTime - startTime);
           //System.out.println("checking: "+actionAttempted);
-          if (!isExplored(nextNode) && !canPrune(nextNode.boxLocations)){
-            frontier.add(nextNode);
-            explored.add(nextNode);
-          }
+          // if (!isExplored(nextNode) && !canPrune(nextNode.boxLocations)){
+          //   frontier.add(nextNode);
+          //   explored.add(nextNode);
+          // }
+          startTime = System.nanoTime();
+            if (!e.contains(nextNode.generatekey()) && !canPrune(nextNode.boxLocations, nextNode.boxmap)){
+              frontier.add(nextNode);
+              e.add(nextNode.generatekey());
+            }
+          endTime = System.nanoTime();
+              pruneexecutionTime += (endTime - startTime);
         }
 
 
