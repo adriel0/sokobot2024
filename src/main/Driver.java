@@ -27,7 +27,7 @@ public class Driver {
 
 
     FileReader fileReader = new FileReader();
-    //MapData mapData = fileReader.readFile("fiveboxes3");
+    //MapData mapData = fileReader.readFile("fiveboxes2");
     
     MapData mapData = fileReader.readFile("original1");
 
