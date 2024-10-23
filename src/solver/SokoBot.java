@@ -17,6 +17,13 @@ class State {
     temp += Integer.toString(playerLocation[0]) + Integer.toString(playerLocation[1]);
     return temp;
   }
+  public String generateboxkey(){
+    String temp = "";
+    for (int[] b : boxLocations) {
+      temp += Integer.toString(b[0]) + Integer.toString(b[1]);
+    }
+    return temp;
+  }
 }
 
 class StateComparator implements Comparator<State>{
@@ -37,8 +44,10 @@ public class SokoBot {
   public List<int[]> goals = new ArrayList<>();
   public int[] player;
   PriorityQueue<State> frontier = new PriorityQueue<>(new StateComparator());
-  public List<State> explored = new ArrayList<>();
-  public Set<String> e = new HashSet<>();
+  //public List<State> explored = new ArrayList<>();
+  public Set<String> explored = new HashSet<>();
+  public Set<String> exploredbox = new HashSet<>();
+  public Set<String> exploredboxbad = new HashSet<>();
   public char[] actions = {'l', 'r', 'u', 'd'};
   public State startState = new State();
   public char[][] mapData;
@@ -47,6 +56,7 @@ public class SokoBot {
   public long endexecutionTime = 0;
   public long pruneexecutionTime = 0;
   public long dupeexecutionTime = 0;
+  public int prunecount = 0;
   
   public void set(List<int[]> source, int[] elementToReplace, int[] newValue){
     for (int[] e : source) {
@@ -234,7 +244,7 @@ public int heuristicFunction(List<int[]> boxLocations, int[] playerLocation){
       if (isEndState(node.boxLocations)){
 
         //System.out.println("end "+ (double)endexecutionTime/1000000000.0 + "s");
-        //System.out.println("prune "+ (double)pruneexecutionTime/1000000000.0 + "s");
+        System.out.println("prune "+ (double)pruneexecutionTime/1000000000.0 + "s " + prunecount);
         //System.out.println("dupe "+ (double)dupeexecutionTime/1000000000.0 + "s");
                                
         System.out.println(node.actions);
@@ -274,23 +284,42 @@ public int heuristicFunction(List<int[]> boxLocations, int[] playerLocation){
               //endTime = System.nanoTime();
               //dupeexecutionTime += (endTime - startTime);
 
-              //startTime = System.nanoTime();
-              if (!e.contains(nextNode.generatekey()) && !canPrune(nextNode.boxLocations, nextNode.boxmap)){
-                frontier.add(nextNode);
-                e.add(nextNode.generatekey());
+              long startTime = System.nanoTime();
+              if (!explored.contains(nextNode.generatekey())){
+                if(!exploredboxbad.contains(nextNode.generateboxkey())){
+                  if(exploredbox.contains(nextNode.generateboxkey())){
+                    frontier.add(nextNode);
+                    explored.add(nextNode.generatekey());
+                  }
+                  else if(!canPrune(nextNode.boxLocations, nextNode.boxmap)){
+                    frontier.add(nextNode);
+                    explored.add(nextNode.generatekey());
+                    exploredbox.add(nextNode.generateboxkey());
+                  }
+                  else{
+                    exploredboxbad.add(nextNode.generateboxkey());
+                  }
+                }
               }
-              //endTime = System.nanoTime();
-              //pruneexecutionTime += (endTime - startTime);
+          // prunecount++;
+          // if (!explored.contains(nextNode.generatekey()) && !canPrune(nextNode.boxLocations, nextNode.boxmap)){
+          //   frontier.add(nextNode);
+          //   explored.add(nextNode.generatekey());
+          // }
+              long endTime = System.nanoTime();
+              pruneexecutionTime += (endTime - startTime);
             }
 
         //this part means that the player did not move into a location of a box or a wall, so he just moved into an empty space
         } else if ((mapData[nextPlayerLocation[0]][nextPlayerLocation[1]] != '#')) {
           //startTime = System.nanoTime();
-          nextNode.boxLocations = new ArrayList<>(node.boxLocations);
-          nextNode.boxmap = new char[mapData.length][mapData[0].length];
-          for (int i = 0; i < nextNode.boxmap.length; i++) {
-            nextNode.boxmap[i] = node.boxmap[i].clone();
-          }
+          nextNode.boxLocations = node.boxLocations;
+          //nextNode.boxLocations = new ArrayList<>(node.boxLocations);
+          nextNode.boxmap = node.boxmap;
+          //nextNode.boxmap = new char[mapData.length][mapData[0].length];
+          //for (int i = 0; i < nextNode.boxmap.length; i++) {
+            //nextNode.boxmap[i] = node.boxmap[i].clone();
+          //}
           nextNode.playerLocation = nextPlayerLocation.clone();
           nextNode.actions = node.actions;
           nextNode.actions += actionAttempted;
@@ -298,13 +327,30 @@ public int heuristicFunction(List<int[]> boxLocations, int[] playerLocation){
           nextNode.heuristic = heuristicFunction(nextNode.boxLocations, nextNode.playerLocation);
           //endTime = System.nanoTime();
           //dupeexecutionTime += (endTime - startTime);
-          //startTime = System.nanoTime();
-          if (!e.contains(nextNode.generatekey()) && !canPrune(nextNode.boxLocations, nextNode.boxmap)){
-            frontier.add(nextNode);
-            e.add(nextNode.generatekey());
+          long startTime = System.nanoTime();
+          if (!explored.contains(nextNode.generatekey())){
+            if(!exploredboxbad.contains(nextNode.generateboxkey())){
+              if(exploredbox.contains(nextNode.generateboxkey())){
+                frontier.add(nextNode);
+                explored.add(nextNode.generatekey());
+              }
+              else if(!canPrune(nextNode.boxLocations, nextNode.boxmap)){
+                frontier.add(nextNode);
+                explored.add(nextNode.generatekey());
+                exploredbox.add(nextNode.generateboxkey());
+              }
+              else{
+                exploredboxbad.add(nextNode.generateboxkey());
+              }
+            }
           }
-          //endTime = System.nanoTime();
-          //pruneexecutionTime += (endTime - startTime);
+          //prunecount++;
+          // if (!explored.contains(nextNode.generatekey()) && !canPrune(nextNode.boxLocations, nextNode.boxmap)){
+          //   frontier.add(nextNode);
+          //   explored.add(nextNode.generatekey());
+          // }
+          long endTime = System.nanoTime();
+          pruneexecutionTime += (endTime - startTime);
         }
 
 
