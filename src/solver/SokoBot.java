@@ -184,39 +184,6 @@ public int heuristicFunction(List<int[]> boxLocations, int[] playerLocation){
     (boxmap[b[0]][b[1]-1] == 'b' && mapData[b[0]+1][b[1]-1] == '#' && mapData[b[0]-1][b[1]] == '#') ||
     (boxmap[b[0]+1][b[1]] == 'b' && mapData[b[0]+1][b[1]+1] == '#' && mapData[b[0]][b[1]-1] == '#') ||
     (boxmap[b[0]][b[1]+1] == 'b' && mapData[b[0]-1][b[1]+1] == '#' && mapData[b[0]+1][b[1]] == '#'))? true:false;
-  //  //       (temp[0][1] == 'b' && temp[0][2] == 'w' && temp[1][2] == 'b')
-    // for (int[] b : boxes) {
-    //   if(mapData[b[0]][b[1]] != '.'){
-    //     temp = getGrid(b, boxmap);
-    //     if ((mapData[b[0]-1][b[1]] == '#' && mapData[b[0]][b[1]-1] == '#') ||
-    //     (mapData[b[0]-1][b[1]] == '#' && mapData[b[0]][b[1]+1] == '#') ||
-    //     (mapData[b[0]+1][b[1]] == '#' && mapData[b[0]][b[1]-1] == '#') ||
-    //     (mapData[b[0]+1][b[1]] == '#' && mapData[b[0]][b[1]+1] == '#'))
-    //     return true;
-      
-    
-
-    //     for (int index = 0; index < 4; index++) {
-    //       if ((temp[0][1] == 'b' && temp[0][2] == 'w' && temp[1][2] == 'w') ||
-    //       (temp[0][1] == 'b' && temp[0][2] == 'w' && temp[1][2] == 'b') ||
-    //       (temp[0][1] == 'b' && temp[0][2] == 'b' && temp[1][2] == 'b') ||
-    //       (temp[0][1] == 'b' && temp[0][2] == 'w' && temp[1][0] == 'w'))
-    //         return true;
-    //       char[][] temp2 = new char[3][3];
-    //       temp2[0] = temp[0].clone();
-    //       temp2[1] = temp[1].clone();
-    //       temp2[2] = temp[2].clone();
-    //       temp2 = flip(temp2);
-    //       if ((temp2[0][1] == 'b' && temp2[0][2] == 'w' && temp2[1][2] == 'w') ||
-    //       (temp2[0][1] == 'b' && temp2[0][2] == 'w' && temp2[1][2] == 'b') ||
-    //       (temp2[0][1] == 'b' && temp2[0][2] == 'b' && temp2[1][2] == 'b') ||
-    //       (temp2[0][1] == 'b' && temp2[0][2] == 'w' && temp2[1][0] == 'w'))
-    //         return true;
-    //       temp = rotate(temp);
-    //     }
-    //   }
-    // }
-    // return false;
   }
 
   
@@ -253,10 +220,6 @@ public int heuristicFunction(List<int[]> boxLocations, int[] playerLocation){
     startState.boxLocations = new ArrayList<>(boxes);
     startState.boxmap = new char[mapData.length][mapData[0].length];
     boxes.stream().forEach(b ->{startState.boxmap[b[0]][b[1]] = 'b';});
-    // for (int[] b : boxes) {
-    //   startState.boxmap[b[0]][b[1]] = 'b';
-    // }
-
     frontier.add(startState);
 
     
@@ -267,18 +230,18 @@ public int heuristicFunction(List<int[]> boxLocations, int[] playerLocation){
 
       //System.out.println(node.actions);
       //if all goals have boxes, game done
-      long startTime = System.nanoTime();
+      //long startTime = System.nanoTime();
       if (isEndState(node.boxLocations)){
 
-        System.out.println("end "+ (double)endexecutionTime/1000000000.0 + "s");
-        System.out.println("prune "+ (double)pruneexecutionTime/1000000000.0 + "s");
-        System.out.println("dupe "+ (double)dupeexecutionTime/1000000000.0 + "s");
+        //System.out.println("end "+ (double)endexecutionTime/1000000000.0 + "s");
+        //System.out.println("prune "+ (double)pruneexecutionTime/1000000000.0 + "s");
+        //System.out.println("dupe "+ (double)dupeexecutionTime/1000000000.0 + "s");
                                
         System.out.println(node.actions);
         return node.actions;
       }
-      long endTime = System.nanoTime();
-      endexecutionTime += (endTime - startTime);
+      //long endTime = System.nanoTime();
+      //endexecutionTime += (endTime - startTime);
 
       for (char actionAttempted:actions){
         State nextNode = new State();
@@ -293,7 +256,7 @@ public int heuristicFunction(List<int[]> boxLocations, int[] playerLocation){
             if (node.boxmap[nextBoxLocation[0]][nextBoxLocation[1]] != 'b' && (mapData[nextBoxLocation[0]][nextBoxLocation[1]] != '#')){
 
             
-              startTime = System.nanoTime();
+              //startTime = System.nanoTime();
               nextNode.boxLocations = new ArrayList<>(node.boxLocations);
 
               set(nextNode.boxLocations, nextPlayerLocation, nextBoxLocation);
@@ -308,21 +271,21 @@ public int heuristicFunction(List<int[]> boxLocations, int[] playerLocation){
               nextNode.actions += actionAttempted;
               nextNode.cost = node.cost; //if player did move a box, we don't add a cost (TO INCENTIVIZE THE MOVES THAT MOVE A BOX)
               nextNode.heuristic = heuristicFunction(nextNode.boxLocations, nextNode.playerLocation);
-              endTime = System.nanoTime();
-              dupeexecutionTime += (endTime - startTime);
+              //endTime = System.nanoTime();
+              //dupeexecutionTime += (endTime - startTime);
 
-              startTime = System.nanoTime();
+              //startTime = System.nanoTime();
               if (!e.contains(nextNode.generatekey()) && !canPrune(nextNode.boxLocations, nextNode.boxmap)){
                 frontier.add(nextNode);
                 e.add(nextNode.generatekey());
               }
-              endTime = System.nanoTime();
-              pruneexecutionTime += (endTime - startTime);
+              //endTime = System.nanoTime();
+              //pruneexecutionTime += (endTime - startTime);
             }
 
         //this part means that the player did not move into a location of a box or a wall, so he just moved into an empty space
         } else if ((mapData[nextPlayerLocation[0]][nextPlayerLocation[1]] != '#')) {
-          startTime = System.nanoTime();
+          //startTime = System.nanoTime();
           nextNode.boxLocations = new ArrayList<>(node.boxLocations);
           nextNode.boxmap = new char[mapData.length][mapData[0].length];
           for (int i = 0; i < nextNode.boxmap.length; i++) {
@@ -333,15 +296,15 @@ public int heuristicFunction(List<int[]> boxLocations, int[] playerLocation){
           nextNode.actions += actionAttempted;
           nextNode.cost = node.cost + 1; //if player did not move a box, add 1 to cost
           nextNode.heuristic = heuristicFunction(nextNode.boxLocations, nextNode.playerLocation);
-          endTime = System.nanoTime();
-          dupeexecutionTime += (endTime - startTime);
-          startTime = System.nanoTime();
-            if (!e.contains(nextNode.generatekey()) && !canPrune(nextNode.boxLocations, nextNode.boxmap)){
-              frontier.add(nextNode);
-              e.add(nextNode.generatekey());
-            }
-          endTime = System.nanoTime();
-              pruneexecutionTime += (endTime - startTime);
+          //endTime = System.nanoTime();
+          //dupeexecutionTime += (endTime - startTime);
+          //startTime = System.nanoTime();
+          if (!e.contains(nextNode.generatekey()) && !canPrune(nextNode.boxLocations, nextNode.boxmap)){
+            frontier.add(nextNode);
+            e.add(nextNode.generatekey());
+          }
+          //endTime = System.nanoTime();
+          //pruneexecutionTime += (endTime - startTime);
         }
 
 
