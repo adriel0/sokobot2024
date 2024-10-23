@@ -137,49 +137,86 @@ public int heuristicFunction(List<int[]> boxLocations, int[] playerLocation){
 
 
   public boolean canPrune(List<int[]> boxes, char[][] boxmap){
-    List<int[]> unfinishedBoxes = new ArrayList<>();
-    for (int[] b : boxes) {
-      if(mapData[b[0]][b[1]] != '.')
-        unfinishedBoxes.add(b);
-    }
-    char[][] temp;
-  //   return boxes.stream().filter(b ->mapData[b[0]][b[1]] != '.' )
-  //   .anyMatch(b -> (mapData[b[0]-1][b[1]] == '#' && mapData[b[0]][b[1]-1] == '#') ||
-  //   (mapData[b[0]-1][b[1]] == '#' && mapData[b[0]][b[1]+1] == '#') ||
-  //   (mapData[b[0]+1][b[1]] == '#' && mapData[b[0]][b[1]-1] == '#') ||
-  //   (mapData[b[0]+1][b[1]] == '#' && mapData[b[0]][b[1]+1] == '#'));
-  // 
-    for (int[] b : boxes) {
-      if(mapData[b[0]][b[1]] != '.'){
-        //temp = getGrid(b, boxmap);
-        if ((mapData[b[0]-1][b[1]] == '#' && mapData[b[0]][b[1]-1] == '#') ||
-        (mapData[b[0]-1][b[1]] == '#' && mapData[b[0]][b[1]+1] == '#') ||
-        (mapData[b[0]+1][b[1]] == '#' && mapData[b[0]][b[1]-1] == '#') ||
-        (mapData[b[0]+1][b[1]] == '#' && mapData[b[0]][b[1]+1] == '#'))
-        return true;
-      }
+    // List<int[]> unfinishedBoxes = new ArrayList<>();
+    // for (int[] b : boxes) {
+    //   if(mapData[b[0]][b[1]] != '.')
+    //     unfinishedBoxes.add(b);
+    // }
+    // char[][] temp;
+    return boxes.stream().filter(b ->mapData[b[0]][b[1]] != '.' )
+    .anyMatch(b -> (mapData[b[0]-1][b[1]] == '#' && mapData[b[0]][b[1]-1] == '#') ||
+    (mapData[b[0]-1][b[1]] == '#' && mapData[b[0]][b[1]+1] == '#') ||
+    (mapData[b[0]+1][b[1]] == '#' && mapData[b[0]][b[1]-1] == '#') ||
+    (mapData[b[0]+1][b[1]] == '#' && mapData[b[0]][b[1]+1] == '#')) ? true:
+    boxes.stream().filter(b ->mapData[b[0]][b[1]] != '.' )
+    .anyMatch(b -> (boxmap[b[0]-1][b[1]] == 'b' && mapData[b[0]-1][b[1]+1] == '#' && mapData[b[0]][b[1]+1] == '#') ||
+    (boxmap[b[0]][b[1]+1] == 'b' && mapData[b[0]+1][b[1]+1] == '#' && mapData[b[0]+1][b[1]] == '#') ||
+    (boxmap[b[0]+1][b[1]] == 'b' && mapData[b[0]+1][b[1]-1] == '#' && mapData[b[0]][b[1]-1] == '#') ||
+    (boxmap[b[0]][b[1]-1] == 'b' && mapData[b[0]-1][b[1]-1] == '#' && mapData[b[0]-1][b[1]] == '#') ||
+    (boxmap[b[0]-1][b[1]] == 'b' && mapData[b[0]-1][b[1]-1] == '#' && mapData[b[0]][b[1]-1] == '#') ||
+    (boxmap[b[0]][b[1]-1] == 'b' && mapData[b[0]+1][b[1]-1] == '#' && mapData[b[0]+1][b[1]] == '#') ||
+    (boxmap[b[0]+1][b[1]] == 'b' && mapData[b[0]+1][b[1]+1] == '#' && mapData[b[0]][b[1]+1] == '#') ||
+    (boxmap[b[0]][b[1]+1] == 'b' && mapData[b[0]-1][b[1]+1] == '#' && mapData[b[0]-1][b[1]] == '#'))? true:
+    boxes.stream().filter(b ->mapData[b[0]][b[1]] != '.' )
+    .anyMatch(b -> (boxmap[b[0]-1][b[1]] == 'b' && mapData[b[0]-1][b[1]+1] == '#' && boxmap[b[0]][b[1]+1] == 'b') ||
+    (boxmap[b[0]][b[1]+1] == 'b' && mapData[b[0]+1][b[1]+1] == '#' && boxmap[b[0]+1][b[1]] == 'b') ||
+    (boxmap[b[0]+1][b[1]] == 'b' && mapData[b[0]+1][b[1]-1] == '#' && boxmap[b[0]][b[1]-1] == 'b') ||
+    (boxmap[b[0]][b[1]-1] == 'b' && mapData[b[0]-1][b[1]-1] == '#' && boxmap[b[0]-1][b[1]] == 'b') ||
+    (boxmap[b[0]-1][b[1]] == 'b' && mapData[b[0]-1][b[1]-1] == '#' && boxmap[b[0]][b[1]-1] == 'b') ||
+    (boxmap[b[0]][b[1]-1] == 'b' && mapData[b[0]+1][b[1]-1] == '#' && boxmap[b[0]+1][b[1]] == 'b') ||
+    (boxmap[b[0]+1][b[1]] == 'b' && mapData[b[0]+1][b[1]+1] == '#' && boxmap[b[0]][b[1]+1] == 'b') ||
+    (boxmap[b[0]][b[1]+1] == 'b' && mapData[b[0]-1][b[1]+1] == '#' && boxmap[b[0]-1][b[1]] == 'b'))? true:
+    boxes.stream().filter(b ->mapData[b[0]][b[1]] != '.' )
+    .anyMatch(b -> (boxmap[b[0]-1][b[1]] == 'b' && boxmap[b[0]-1][b[1]+1] == 'b' && boxmap[b[0]][b[1]+1] == 'b') ||
+    (boxmap[b[0]][b[1]+1] == 'b' && boxmap[b[0]+1][b[1]+1] == 'b' && boxmap[b[0]+1][b[1]] == 'b') ||
+    (boxmap[b[0]+1][b[1]] == 'b' && boxmap[b[0]+1][b[1]-1] == 'b' && boxmap[b[0]][b[1]-1] == 'b') ||
+    (boxmap[b[0]][b[1]-1] == 'b' && boxmap[b[0]-1][b[1]-1] == 'b' && boxmap[b[0]-1][b[1]] == 'b') ||
+    (boxmap[b[0]-1][b[1]] == 'b' && boxmap[b[0]-1][b[1]-1] == 'b' && boxmap[b[0]][b[1]-1] == 'b') ||
+    (boxmap[b[0]][b[1]-1] == 'b' && boxmap[b[0]+1][b[1]-1] == 'b' && boxmap[b[0]+1][b[1]] == 'b') ||
+    (boxmap[b[0]+1][b[1]] == 'b' && boxmap[b[0]+1][b[1]+1] == 'b' && boxmap[b[0]][b[1]+1] == 'b') ||
+    (boxmap[b[0]][b[1]+1] == 'b' && boxmap[b[0]-1][b[1]+1] == 'b' && boxmap[b[0]-1][b[1]] == 'b'))? true:
+    boxes.stream().filter(b ->mapData[b[0]][b[1]] != '.' )
+    .anyMatch(b -> (boxmap[b[0]-1][b[1]] == 'b' && mapData[b[0]-1][b[1]+1] == '#' && mapData[b[0]][b[1]-1] == '#') ||
+    (boxmap[b[0]][b[1]+1] == 'b' && mapData[b[0]+1][b[1]+1] == '#' && mapData[b[0]-1][b[1]] == '#') ||
+    (boxmap[b[0]+1][b[1]] == 'b' && mapData[b[0]+1][b[1]-1] == '#' && mapData[b[0]][b[1]+1] == '#') ||
+    (boxmap[b[0]][b[1]-1] == 'b' && mapData[b[0]-1][b[1]-1] == '#' && mapData[b[0]+1][b[1]] == '#') ||
+    (boxmap[b[0]-1][b[1]] == 'b' && mapData[b[0]-1][b[1]-1] == '#' && mapData[b[0]][b[1]+1] == '#') ||
+    (boxmap[b[0]][b[1]-1] == 'b' && mapData[b[0]+1][b[1]-1] == '#' && mapData[b[0]-1][b[1]] == '#') ||
+    (boxmap[b[0]+1][b[1]] == 'b' && mapData[b[0]+1][b[1]+1] == '#' && mapData[b[0]][b[1]-1] == '#') ||
+    (boxmap[b[0]][b[1]+1] == 'b' && mapData[b[0]-1][b[1]+1] == '#' && mapData[b[0]+1][b[1]] == '#'))? true:false;
+  //  //       (temp[0][1] == 'b' && temp[0][2] == 'w' && temp[1][2] == 'b')
+    // for (int[] b : boxes) {
+    //   if(mapData[b[0]][b[1]] != '.'){
+    //     temp = getGrid(b, boxmap);
+    //     if ((mapData[b[0]-1][b[1]] == '#' && mapData[b[0]][b[1]-1] == '#') ||
+    //     (mapData[b[0]-1][b[1]] == '#' && mapData[b[0]][b[1]+1] == '#') ||
+    //     (mapData[b[0]+1][b[1]] == '#' && mapData[b[0]][b[1]-1] == '#') ||
+    //     (mapData[b[0]+1][b[1]] == '#' && mapData[b[0]][b[1]+1] == '#'))
+    //     return true;
+      
+    
 
-
-      // for (int index = 0; index < 4; index++) {
-      //   if ((temp[0][1] == 'b' && temp[0][2] == 'w' && temp[1][2] == 'w') ||
-      //   (temp[0][1] == 'b' && temp[0][2] == 'w' && temp[1][2] == 'b') ||
-      //   (temp[0][1] == 'b' && temp[0][2] == 'b' && temp[1][2] == 'b') ||
-      //   (temp[0][1] == 'b' && temp[0][2] == 'w' && temp[1][0] == 'w'))
-      //     return true;
-      //   char[][] temp2 = new char[3][3];
-      //   temp2[0] = temp[0].clone();
-      //   temp2[1] = temp[1].clone();
-      //   temp2[2] = temp[2].clone();
-      //   temp2 = flip(temp2);
-      //   if ((temp2[0][1] == 'b' && temp2[0][2] == 'w' && temp2[1][2] == 'w') ||
-      //   (temp2[0][1] == 'b' && temp2[0][2] == 'w' && temp2[1][2] == 'b') ||
-      //   (temp2[0][1] == 'b' && temp2[0][2] == 'b' && temp2[1][2] == 'b') ||
-      //   (temp2[0][1] == 'b' && temp2[0][2] == 'w' && temp2[1][0] == 'w'))
-      //     return true;
-      //   temp = rotate(temp);
-      // }
-    }
-    return false;
+    //     for (int index = 0; index < 4; index++) {
+    //       if ((temp[0][1] == 'b' && temp[0][2] == 'w' && temp[1][2] == 'w') ||
+    //       (temp[0][1] == 'b' && temp[0][2] == 'w' && temp[1][2] == 'b') ||
+    //       (temp[0][1] == 'b' && temp[0][2] == 'b' && temp[1][2] == 'b') ||
+    //       (temp[0][1] == 'b' && temp[0][2] == 'w' && temp[1][0] == 'w'))
+    //         return true;
+    //       char[][] temp2 = new char[3][3];
+    //       temp2[0] = temp[0].clone();
+    //       temp2[1] = temp[1].clone();
+    //       temp2[2] = temp[2].clone();
+    //       temp2 = flip(temp2);
+    //       if ((temp2[0][1] == 'b' && temp2[0][2] == 'w' && temp2[1][2] == 'w') ||
+    //       (temp2[0][1] == 'b' && temp2[0][2] == 'w' && temp2[1][2] == 'b') ||
+    //       (temp2[0][1] == 'b' && temp2[0][2] == 'b' && temp2[1][2] == 'b') ||
+    //       (temp2[0][1] == 'b' && temp2[0][2] == 'w' && temp2[1][0] == 'w'))
+    //         return true;
+    //       temp = rotate(temp);
+    //     }
+    //   }
+    // }
+    // return false;
   }
 
   

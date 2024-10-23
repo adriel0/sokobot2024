@@ -29,7 +29,7 @@ public class Driver {
     FileReader fileReader = new FileReader();
     //MapData mapData = fileReader.readFile("fiveboxes2");
     
-    MapData mapData = fileReader.readFile("original1");
+    MapData mapData = fileReader.readFile("fiveboxes3");
 
     GameFrame gameFrame = new GameFrame(mapData);
     gameFrame.initiateSolution();
