@@ -2,6 +2,7 @@ package solver;
 import java.util.*;
 import java.util.stream.*;
 
+//state representation stores the locations of the player and boxes as well as the possible actions and costs of the state
 class State {
   public int[] playerLocation = new int[2];
   public List<int[]> boxLocations = new ArrayList<>();
@@ -9,6 +10,8 @@ class State {
   public String actions = "";
   public int cost = 0;
   public int heuristic;
+
+  //generate key for hash (stores the box and player locations in a string)
   public String generatekey(){
     String temp = "";
     for (int[] b : boxLocations) {
@@ -17,15 +20,9 @@ class State {
     temp += Integer.toString(playerLocation[0]) + Integer.toString(playerLocation[1]);
     return temp;
   }
-  public String generateboxkey(){
-    String temp = "";
-    for (int[] b : boxLocations) {
-      temp += Integer.toString(b[0]) + Integer.toString(b[1]);
-    }
-    return temp;
-  }
 }
 
+//comparator for cost+heuristics of states
 class StateComparator implements Comparator<State>{
              
   public int compare(State s1, State s2) {
@@ -43,21 +40,24 @@ public class SokoBot {
   public List<int[]> boxes = new ArrayList<>();
   public List<int[]> goals = new ArrayList<>();
   public int[] player;
+
+  //frontier declared as priority queue
   PriorityQueue<State> frontier = new PriorityQueue<>(new StateComparator());
-  //public List<State> explored = new ArrayList<>();
   public Set<String> explored = new HashSet<>();
   public Set<String> exploredbox = new HashSet<>();
   public Set<String> exploredboxbad = new HashSet<>();
   public char[] actions = {'l', 'r', 'u', 'd'};
   public State startState = new State();
-  public char[][] mapData;
-  public char[][] itemsData;
+
+  public char[][] mapData; //walls and goals
+  public char[][] itemsData; //player and boxes
   
   public long endexecutionTime = 0;
   public long pruneexecutionTime = 0;
   public long dupeexecutionTime = 0;
   public int prunecount = 0;
   
+  //the set function will set an element in a list to a new value
   public void set(List<int[]> source, int[] elementToReplace, int[] newValue){
     for (int[] e : source) {
       if(e[0] == elementToReplace[0] && e[1] == elementToReplace[1]){
@@ -67,6 +67,8 @@ public class SokoBot {
     }
     return;
   }
+
+  //the performAction function will compute the resulting location based on action performed
   public int[] performAction(int[] location, char action){
     switch(action){
       case 'l':
@@ -80,17 +82,24 @@ public class SokoBot {
     }
   }
 
-
+//checks if all boxlocations match with the goal locations, which indicate that it is an end state
   public boolean isEndState(List<int[]> boxLocations){
     return boxLocations.stream().allMatch(bl->(mapData[bl[0]][bl[1]] == '.'));
   }
 
 
-
+/*the heuristicFunction will use Manhattan distance to calculate the distances of the 
+a.) unfinished boxes to their closest goals, 
+b.) player to the unfinished boxes, and 
+c.) player to the goals
+then it will square the values of b and c, and add them together with the value of a
+*/
 public int heuristicFunction(List<int[]> boxLocations, int[] playerLocation){
   int estimatedDistance = 0;
  
+  //for each box
   for (int[] b : boxLocations) {
+    //find the distance of the closest goal to the box
     int temp = Integer.MAX_VALUE;
     if(mapData[b[0]][b[1]] != '.'){
       for (int[] g : goals) {
@@ -99,60 +108,31 @@ public int heuristicFunction(List<int[]> boxLocations, int[] playerLocation){
         temp = Math.min(temp, dist);
       }
       estimatedDistance += temp;
+
+      //add the square of the distance of player from this box
       estimatedDistance += ((Math.abs(b[0] - playerLocation[0]) +
       Math.abs(b[1] - playerLocation[1]))-1)*((Math.abs(b[0] - playerLocation[0]) +
                      Math.abs(b[1] - playerLocation[1]))-1);
     }
   }
+  //find the closest distance of player to goal
   int temp = Integer.MAX_VALUE;
   for (int[] g : goals) {
     int dist = Math.abs(playerLocation[0] - g[0]) +
                 Math.abs(playerLocation[1] - g[1]);
     temp = Math.min(temp, dist);
   }
+
+  //square the closest distance of player to goal, then add to total
   estimatedDistance += temp*temp;
   
 
   return estimatedDistance;
 }
-
-  public char[][] getGrid(int[] box,char[][] boxmap){
-    int x = box[0];
-    int y = box[1];
-    
-    return new char[][]{
-      new char[]{(mapData[x-1][y-1] == '#') ? 'w':boxmap[x-1][y-1], (mapData[x-1][y] == '#') ? 'w':boxmap[x-1][y], (mapData[x-1][y+1] == '#') ? 'w':boxmap[x-1][y+1]},
-      new char[]{(mapData[x][y-1] == '#') ? 'w':boxmap[x][y-1], 'b', (mapData[x][y+1] == '#') ? 'w':boxmap[x][y+1]},
-      new char[]{(mapData[x+1][y-1] == '#') ? 'w':boxmap[x][y-1], (mapData[x+1][y] == '#') ? 'w':boxmap[x+1][y], (mapData[x+1][y+1] == '#') ? 'w':boxmap[x+1][y+1]}};
-  }
-  public char[][] rotate(char[][] grid) {
-      char[][] temp = new char[3][3];
-      for (int r = 0; r < 3; r++) {
-          for (int c = 0; c < 3; c++) {
-            temp[r][c] = grid[c][2-r];
-          }
-      }
-      return temp;
-  }
-  public char[][] flip(char[][] grid) {
-    char[][] temp = new char[3][3];
-    for (int r = 0; r < 3; r++) {
-        for (int c = 0; c < 3; c++) {
-          temp[r][c] = grid[r][2-c];
-        }
-    }
-    return temp;
-}
-
-
-
+ 
+  //the prune function will check for states with unmovable boxes so they can be pruned
   public boolean canPrune(List<int[]> boxes, char[][] boxmap){
-    // List<int[]> unfinishedBoxes = new ArrayList<>();
-    // for (int[] b : boxes) {
-    //   if(mapData[b[0]][b[1]] != '.')
-    //     unfinishedBoxes.add(b);
-    // }
-    // char[][] temp;
+    
     return boxes.stream().filter(b ->mapData[b[0]][b[1]] != '.' )
     .anyMatch(b -> (mapData[b[0]-1][b[1]] == '#' && mapData[b[0]][b[1]-1] == '#') ||
     (mapData[b[0]-1][b[1]] == '#' && mapData[b[0]][b[1]+1] == '#') ||
@@ -230,15 +210,15 @@ public int heuristicFunction(List<int[]> boxLocations, int[] playerLocation){
     startState.boxLocations = new ArrayList<>(boxes);
     startState.boxmap = new char[mapData.length][mapData[0].length];
     boxes.stream().forEach(b ->{startState.boxmap[b[0]][b[1]] = 'b';});
+
+    //place start state into frontier
     frontier.add(startState);
 
-    
-    
+    //while frontier not empty
     while (!frontier.isEmpty()){
       //extract one state
       State node = frontier.poll();
 
-      //System.out.println(node.actions);
       //if all goals have boxes, game done
       //long startTime = System.nanoTime();
       if (isEndState(node.boxLocations)){
@@ -250,12 +230,13 @@ public int heuristicFunction(List<int[]> boxLocations, int[] playerLocation){
         System.out.println(node.actions);
         return node.actions;
       }
-      //long endTime = System.nanoTime();
-      //endexecutionTime += (endTime - startTime);
-
+      
+      //for each action (l, r, u, d)
       for (char actionAttempted:actions){
+        //generate node for the next state resulting from action
         State nextNode = new State();
 
+        //compute for resulting location of player after performing action
         int[] nextPlayerLocation = performAction(node.playerLocation, actionAttempted);
 
         //if the player moved into a box location, it means they attempted to push it
@@ -264,18 +245,22 @@ public int heuristicFunction(List<int[]> boxLocations, int[] playerLocation){
             int[] nextBoxLocation = performAction(nextPlayerLocation, actionAttempted);
             //if box was not moved into a wall or another box, valid move
             if (node.boxmap[nextBoxLocation[0]][nextBoxLocation[1]] != 'b' && (mapData[nextBoxLocation[0]][nextBoxLocation[1]] != '#')){
-
-            
-              //startTime = System.nanoTime();
               nextNode.boxLocations = new ArrayList<>(node.boxLocations);
 
+              //a box was moved, so change the location of that particular box
               set(nextNode.boxLocations, nextPlayerLocation, nextBoxLocation);
               nextNode.boxmap = new char[mapData.length][mapData[0].length];
+
+              //copy box locations into next node
               for (int i = 0; i < nextNode.boxmap.length; i++) {
                 nextNode.boxmap[i] = node.boxmap[i].clone();
               }
+
+              //update locations based on the result of pushing the box
               nextNode.boxmap[nextPlayerLocation[0]][nextPlayerLocation[1]] = ' ';
               nextNode.boxmap[nextBoxLocation[0]][nextBoxLocation[1]] = 'b';
+
+              //update player location and action, copy cost, and compute heuristic
               nextNode.playerLocation = nextPlayerLocation.clone();
               nextNode.actions = node.actions;
               nextNode.actions += actionAttempted;
@@ -285,6 +270,7 @@ public int heuristicFunction(List<int[]> boxLocations, int[] playerLocation){
               //dupeexecutionTime += (endTime - startTime);
 
               long startTime = System.nanoTime();
+              //if this next node is not one of the explored states AND cannot be pruned, add it to frontier and explored
               if (!explored.contains(nextNode.generatekey())){
                 if(!exploredboxbad.contains(nextNode.generateboxkey())){
                   if(exploredbox.contains(nextNode.generateboxkey())){
@@ -328,6 +314,8 @@ public int heuristicFunction(List<int[]> boxLocations, int[] playerLocation){
           //endTime = System.nanoTime();
           //dupeexecutionTime += (endTime - startTime);
           long startTime = System.nanoTime();
+          //if this next node is not one of the explored states AND cannot be pruned, add it to frontier and explored
+
           if (!explored.contains(nextNode.generatekey())){
             if(!exploredboxbad.contains(nextNode.generateboxkey())){
               if(exploredbox.contains(nextNode.generateboxkey())){
