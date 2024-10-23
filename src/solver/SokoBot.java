@@ -20,6 +20,13 @@ class State {
     temp += Integer.toString(playerLocation[0]) + Integer.toString(playerLocation[1]);
     return temp;
   }
+  public String generateboxkey(){
+    String temp = "";
+    for (int[] b : boxLocations) {
+      temp += Integer.toString(b[0]) + Integer.toString(b[1]);
+    }
+    return temp;
+  }
 }
 
 //comparator for cost+heuristics of states
@@ -45,7 +52,7 @@ public class SokoBot {
   PriorityQueue<State> frontier = new PriorityQueue<>(new StateComparator());
   public Set<String> explored = new HashSet<>();
   public Set<String> exploredbox = new HashSet<>();
-  public Set<String> exploredboxbad = new HashSet<>();
+  //public Set<String> exploredboxbad = new HashSet<>();
   public char[] actions = {'l', 'r', 'u', 'd'};
   public State startState = new State();
 
@@ -272,7 +279,7 @@ public int heuristicFunction(List<int[]> boxLocations, int[] playerLocation){
               long startTime = System.nanoTime();
               //if this next node is not one of the explored states AND cannot be pruned, add it to frontier and explored
               if (!explored.contains(nextNode.generatekey())){
-                if(!exploredboxbad.contains(nextNode.generateboxkey())){
+                //if(!exploredboxbad.contains(nextNode.generateboxkey())){
                   if(exploredbox.contains(nextNode.generateboxkey())){
                     frontier.add(nextNode);
                     explored.add(nextNode.generatekey());
@@ -282,10 +289,10 @@ public int heuristicFunction(List<int[]> boxLocations, int[] playerLocation){
                     explored.add(nextNode.generatekey());
                     exploredbox.add(nextNode.generateboxkey());
                   }
-                  else{
-                    exploredboxbad.add(nextNode.generateboxkey());
-                  }
-                }
+                //   else{
+                //     exploredboxbad.add(nextNode.generateboxkey());
+                //   }
+                // }
               }
           // prunecount++;
           // if (!explored.contains(nextNode.generatekey()) && !canPrune(nextNode.boxLocations, nextNode.boxmap)){
@@ -317,7 +324,7 @@ public int heuristicFunction(List<int[]> boxLocations, int[] playerLocation){
           //if this next node is not one of the explored states AND cannot be pruned, add it to frontier and explored
 
           if (!explored.contains(nextNode.generatekey())){
-            if(!exploredboxbad.contains(nextNode.generateboxkey())){
+            //if(!exploredboxbad.contains(nextNode.generateboxkey())){
               if(exploredbox.contains(nextNode.generateboxkey())){
                 frontier.add(nextNode);
                 explored.add(nextNode.generatekey());
@@ -327,10 +334,10 @@ public int heuristicFunction(List<int[]> boxLocations, int[] playerLocation){
                 explored.add(nextNode.generatekey());
                 exploredbox.add(nextNode.generateboxkey());
               }
-              else{
-                exploredboxbad.add(nextNode.generateboxkey());
-              }
-            }
+              //else{
+              //  exploredboxbad.add(nextNode.generateboxkey());
+              //}
+            //}
           }
           //prunecount++;
           // if (!explored.contains(nextNode.generatekey()) && !canPrune(nextNode.boxLocations, nextNode.boxmap)){
