@@ -69,7 +69,7 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener {
   private long solutionStartTime;
   private long solutionEndTime;
 
-  private final int SOLUTION_TIME_LIMIT = 1500000;
+  private final int SOLUTION_TIME_LIMIT = 15000;
 
   public GamePanel() {
     this.setBackground(Color.BLACK);
@@ -388,7 +388,8 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener {
           executeMove(3);
           break;
       }
-    } else if (true) {
+    } else if (e.getSource() == checkForSolutionTimer) {
+    // } else if (true) {
       if (!solutionThread.isAlive()) {
         // Solution was found
         solutionTimer.stop();

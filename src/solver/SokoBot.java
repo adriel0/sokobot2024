@@ -231,7 +231,7 @@ public int heuristicFunction(List<int[]> boxLocations, int[] playerLocation){
       if (isEndState(node.boxLocations)){
 
         //System.out.println("end "+ (double)endexecutionTime/1000000000.0 + "s");
-        System.out.println("prune "+ (double)pruneexecutionTime/1000000000.0 + "s " + prunecount);
+        //System.out.println("prune "+ (double)pruneexecutionTime/1000000000.0 + "s " + prunecount);
         //System.out.println("dupe "+ (double)dupeexecutionTime/1000000000.0 + "s");
                                
         System.out.println(node.actions);
@@ -276,7 +276,7 @@ public int heuristicFunction(List<int[]> boxLocations, int[] playerLocation){
               //endTime = System.nanoTime();
               //dupeexecutionTime += (endTime - startTime);
 
-              long startTime = System.nanoTime();
+              //long startTime = System.nanoTime();
               //if this next node is not one of the explored states AND cannot be pruned, add it to frontier and explored
               if (!explored.contains(nextNode.generatekey())){
                 //if(!exploredboxbad.contains(nextNode.generateboxkey())){
@@ -299,8 +299,8 @@ public int heuristicFunction(List<int[]> boxLocations, int[] playerLocation){
           //   frontier.add(nextNode);
           //   explored.add(nextNode.generatekey());
           // }
-              long endTime = System.nanoTime();
-              pruneexecutionTime += (endTime - startTime);
+              //long endTime = System.nanoTime();
+              //pruneexecutionTime += (endTime - startTime);
             }
 
         //this part means that the player did not move into a location of a box or a wall, so he just moved into an empty space
@@ -320,7 +320,7 @@ public int heuristicFunction(List<int[]> boxLocations, int[] playerLocation){
           nextNode.heuristic = heuristicFunction(nextNode.boxLocations, nextNode.playerLocation);
           //endTime = System.nanoTime();
           //dupeexecutionTime += (endTime - startTime);
-          long startTime = System.nanoTime();
+          //long startTime = System.nanoTime();
           //if this next node is not one of the explored states AND cannot be pruned, add it to frontier and explored
 
           if (!explored.contains(nextNode.generatekey())){
@@ -344,8 +344,8 @@ public int heuristicFunction(List<int[]> boxLocations, int[] playerLocation){
           //   frontier.add(nextNode);
           //   explored.add(nextNode.generatekey());
           // }
-          long endTime = System.nanoTime();
-          pruneexecutionTime += (endTime - startTime);
+          //long endTime = System.nanoTime();
+          //pruneexecutionTime += (endTime - startTime);
         }
 
 
